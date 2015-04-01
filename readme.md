@@ -14,33 +14,8 @@ $ npm install --save shoov-webdrivercss
 
 ```js
 var shoovWebdrivercss = require('shoov-webdrivercss');
-
-shoovWebdrivercss('unicorns');
-//=> unicorns & rainbows
 ```
-
-
-## API
-
-### shoovWebdrivercss(input, [options])
-
-#### input
-
-*Required*  
-Type: `string`
-
-Lorem ipsum.
-
-#### options
-
-##### foo
-
-Type: `boolean`  
-Default: `false`
-
-Lorem ipsum.
-
 
 ## License
 
-MIT © [Amitaibu](http://gizra.com)
+MIT © [Gizra](http://gizra.com)
