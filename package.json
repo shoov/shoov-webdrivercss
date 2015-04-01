@@ -1,11 +1,11 @@
 {
   "name": "shoov-webdrivercss",
-  "version": "0.0.0",
-  "description": "My praiseworthy module",
+  "version": "0.0.1",
+  "description": "Shoov integration with WebDriverCss",
   "license": "MIT",
   "repository": "shoov/shoov-webdrivercss",
   "author": {
-    "name": "Amitaibu",
+    "name": "amitaibu",
     "email": "amitai@gizra.com",
     "url": "gizra.com"
   },
@@ -19,9 +19,18 @@
     "index.js"
   ],
   "keywords": [
-    ""
+    "shoov webdrivercss"
   ],
-  "dependencies": {},
+  "dependencies": {
+    "bluebird": "^2.9.14",
+    "git-rev": "^0.2.1",
+    "nconf": "^0.7.1",
+    "open": "0.0.5",
+    "ramda": "^0.11.0",
+    "request-promise": "^0.4.0",
+    "webdrivercss": "^1.0.6",
+    "webdriverio": "^2.4.5"
+  },
   "devDependencies": {
     "mocha": "*"
   }
