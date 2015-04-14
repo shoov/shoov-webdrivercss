@@ -17,6 +17,9 @@ var uploads = [];
 
 var client = {};
 
+// @todo: Get this info from the "uploads" variable.
+var buildId;
+
 var gitCommit;
 var gitBranch;
 
@@ -132,10 +135,13 @@ var uploadFailedImage = function(obj) {
           throw new Error(err);
         })
         .on('data', function(data) {
+          data = JSON.parse(data).data[0];
+          // Populate the build ID.
+          buildId = buildId || data.build;
+
           if (getConfig('debug')) {
             // Show response.
-            data = JSON.parse(data);
-            console.log(data.data);
+            console.log(data);
           }
         })
         .on('response', function(response) {
@@ -194,7 +200,7 @@ var wdcssSetup = {
       .then(function() {
         if (uploads.length) {
           var clientUrl = getConfig('client_url', 'http://shoov.gizra.com');
-          var regressionUrl = clientUrl + '/#/screenshots/' + gitCommit;
+          var regressionUrl = clientUrl + '/#/screenshots/' + buildId;
           console.log('See regressions in: ' + regressionUrl);
 
           if (getConfig('open_link')) {
