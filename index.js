@@ -2,7 +2,6 @@
 
 var Promise = require('bluebird');
 
-var assert = require('assert');
 var exec   = require('child_process').exec;
 var fs = Promise.promisifyAll(require('fs'));
 var git = require('git-rev');
@@ -30,9 +29,24 @@ git.branch(function (str) {
   gitBranch = str;
 });
 
-// Get the directory to to the root level. We don't use any nodejs wrapper, as
-// we haven't found a good one that does git rev-parse.
+/**
+ * Get the commit subject.
+ */
+var gitSubject = new Promise(function(resolve, reject) {
+  exec('git log HEAD -1 --format=%s', function(err, stdout) {
+    if(err) {
+      reject(err);
+    }
+    else {
+      resolve(stdout.replace('\n', ''));
+    }
+  });
+});
 
+
+/**
+ * Get the directory prefix from the repository root.
+ */
 var gitPrefix = new Promise(function(resolve, reject) {
   exec('git rev-parse --show-prefix', function(err, stdout) {
     if(err) {
@@ -105,14 +119,14 @@ var uploadFailedImage = function(obj) {
     }
   };
 
-  var gitData = [gitPrefix, getRepoName];
+  var gitData = {
+    gitSubject: gitSubject,
+    gitPrefix: gitPrefix,
+    getRepoName: getRepoName
+  };
 
-  Promise
-    .all(gitData)
-    .then(function(data) {
-
-      var dirPrefix = data[0];
-      var repoName = data[1];
+  Promise.prop(gitData)
+    .then(function(gitData) {
 
       var req = request.post(options);
       req
@@ -148,9 +162,11 @@ var uploadFailedImage = function(obj) {
       form.append('baseline_name', obj.baselinePath);
       form.append('git_commit', gitCommit);
       form.append('git_branch', gitBranch);
+      form.append('git_subject', gitData.gitSubject);
 
-      form.append('directory_prefix', dirPrefix);
-      form.append('repository', repoName);
+      form.append('directory_prefix', gitData.gitPrefix);
+      form.append('repository', gitData.gitRepoName);
+
 
       uploads.push(req);
     });
