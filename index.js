@@ -1,9 +1,7 @@
 'use strict';
 
 var Promise = require('bluebird');
-
-var assert = require('assert');
-var exec   = require('child_process').exec;
+var exec = require('child_process').exec;
 var fs = Promise.promisifyAll(require('fs'));
 var git = require('git-rev');
 var nconf = require('nconf');
@@ -19,6 +17,9 @@ var uploads = [];
 
 var client = {};
 
+// @todo: Get this info from the "uploads" variable.
+var buildId;
+
 var gitCommit;
 var gitBranch;
 
@@ -30,9 +31,24 @@ git.branch(function (str) {
   gitBranch = str;
 });
 
-// Get the directory to to the root level. We don't use any nodejs wrapper, as
-// we haven't found a good one that does git rev-parse.
+/**
+ * Get the commit subject.
+ */
+var gitSubject = new Promise(function(resolve, reject) {
+  exec('git log HEAD -1 --format=%s', function(err, stdout) {
+    if(err) {
+      reject(err);
+    }
+    else {
+      resolve(stdout.replace('\n', ''));
+    }
+  });
+});
 
+
+/**
+ * Get the directory prefix from the repository root.
+ */
 var gitPrefix = new Promise(function(resolve, reject) {
   exec('git rev-parse --show-prefix', function(err, stdout) {
     if(err) {
@@ -44,7 +60,7 @@ var gitPrefix = new Promise(function(resolve, reject) {
   });
 });
 
-var getRepoName = new Promise(function(resolve, reject) {
+var gitRepoName = new Promise(function(resolve, reject) {
   exec('git config --get remote.origin.url', function(err, stdout) {
     if(err) {
       reject(err);
@@ -105,25 +121,27 @@ var uploadFailedImage = function(obj) {
     }
   };
 
-  var gitData = [gitPrefix, getRepoName];
+  var gitData = {
+    gitSubject: gitSubject,
+    gitPrefix: gitPrefix,
+    gitRepoName: gitRepoName
+  };
 
-  Promise
-    .all(gitData)
-    .then(function(data) {
-
-      var dirPrefix = data[0];
-      var repoName = data[1];
-
+  Promise.props(gitData)
+    .then(function(gitData) {
       var req = request.post(options);
       req
         .on('error', function (err) {
           throw new Error(err);
         })
         .on('data', function(data) {
+          data = JSON.parse(data).data[0];
+          // Populate the build ID.
+          buildId = buildId || data.build;
+
           if (getConfig('debug')) {
             // Show response.
-            data = JSON.parse(data);
-            console.log(data.data);
+            console.log(data);
           }
         })
         .on('response', function(response) {
@@ -134,7 +152,6 @@ var uploadFailedImage = function(obj) {
             throw new Error('Access token is incorrect or no longer valid, visit your account page');
           }
         });
-
 
       var form = req.form();
 
@@ -148,9 +165,11 @@ var uploadFailedImage = function(obj) {
       form.append('baseline_name', obj.baselinePath);
       form.append('git_commit', gitCommit);
       form.append('git_branch', gitBranch);
+      form.append('git_subject', gitData.gitSubject);
 
-      form.append('directory_prefix', dirPrefix);
-      form.append('repository', repoName);
+      form.append('directory_prefix', gitData.gitPrefix);
+      form.append('repository', gitData.gitRepoName);
+
 
       uploads.push(req);
     });
@@ -181,7 +200,7 @@ var wdcssSetup = {
       .then(function() {
         if (uploads.length) {
           var clientUrl = getConfig('client_url', 'http://shoov.gizra.com');
-          var regressionUrl = clientUrl + '/#/screenshots/' + gitCommit;
+          var regressionUrl = clientUrl + '/#/screenshots/' + buildId;
           console.log('See regressions in: ' + regressionUrl);
 
           if (getConfig('open_link')) {
