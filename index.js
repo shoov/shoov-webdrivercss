@@ -57,7 +57,7 @@ var gitPrefix = new Promise(function(resolve, reject) {
   });
 });
 
-var getRepoName = new Promise(function(resolve, reject) {
+var gitRepoName = new Promise(function(resolve, reject) {
   exec('git config --get remote.origin.url', function(err, stdout) {
     if(err) {
       reject(err);
@@ -121,12 +121,11 @@ var uploadFailedImage = function(obj) {
   var gitData = {
     gitSubject: gitSubject,
     gitPrefix: gitPrefix,
-    getRepoName: getRepoName
+    gitRepoName: gitRepoName
   };
 
   Promise.props(gitData)
     .then(function(gitData) {
-
       var req = request.post(options);
       req
         .on('error', function (err) {
@@ -147,7 +146,6 @@ var uploadFailedImage = function(obj) {
             throw new Error('Access token is incorrect or no longer valid, visit your account page');
           }
         });
-
 
       var form = req.form();
 
