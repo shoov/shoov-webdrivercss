@@ -1,6 +1,6 @@
 # shoov-webdrivercss [![Build Status](https://travis-ci.org/shoov/shoov-webdrivercss.svg?branch=master)](https://travis-ci.org/shoov/shoov-webdrivercss)
 
-> My praiseworthy module
+>npm module to allow easy integration between Shoov.io and WebDriverCss
 
 
 ## Install
