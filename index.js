@@ -1,8 +1,7 @@
 'use strict';
 
 var Promise = require('bluebird');
-
-var exec   = require('child_process').exec;
+var exec = require('child_process').exec;
 var fs = Promise.promisifyAll(require('fs'));
 var git = require('git-rev');
 var nconf = require('nconf');
@@ -125,7 +124,7 @@ var uploadFailedImage = function(obj) {
     getRepoName: getRepoName
   };
 
-  Promise.prop(gitData)
+  Promise.props(gitData)
     .then(function(gitData) {
 
       var req = request.post(options);
