@@ -127,6 +127,8 @@ var uploadFailedImage = function(obj) {
     gitRepoName: gitRepoName
   };
 
+  var uploadResponse = '';
+
   Promise.props(gitData)
     .then(function(gitData) {
       var req = request.post(options);
@@ -134,8 +136,11 @@ var uploadFailedImage = function(obj) {
         .on('error', function (err) {
           throw new Error(err);
         })
-        .on('data', function(data) {
-          data = JSON.parse(data).data[0];
+        .on('data', function(chunk) {
+          uploadResponse += chunk;
+        })
+        .on('end', function() {
+          var data = JSON.parse(uploadResponse).data[0];
           // Populate the build ID.
           buildId = buildId || data.build;
 
