@@ -234,9 +234,6 @@ var wdcssSetup = {
   getClient : function (done, capsSetup) {
     var caps = {};
 
-    // Determines if the view port handling should be done by the client.
-    var setViewPort = false;
-
     if (process.env.SAUCE_USERNAME) {
       caps['browserName'] = 'chrome';
       caps['platform'] = 'Linux';
@@ -271,17 +268,14 @@ var wdcssSetup = {
     }
     else {
       client = WebdriverIO.remote({ desiredCapabilities: {browserName: 'phantomjs'} });
-      setViewPort = true;
     }
 
     // Init the client.
     client.init(done);
-    if (setViewPort) {
-      client.setViewportSize({
-        width: 1024,
-        height: 768
-      });
-    }
+    client.setViewportSize({
+      width: 1024,
+      height: 768
+    });
 
     return client;
   }
