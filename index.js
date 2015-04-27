@@ -298,9 +298,6 @@ var wdcssSetup = {
         caps['resolution'] = '1024x768';
       }
 
-      console.log(capsProvided);
-      console.log(caps);
-
       caps['browserstack.user'] = browserStackUserName;
       caps['browserstack.key'] = browserStackKey;
       caps['browserstack.debug'] = 'true';
