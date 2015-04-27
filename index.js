@@ -90,17 +90,25 @@ var gitRepoName = new Promise(function(resolve, reject) {
  *   The config name.
  * @param defaultValue
  *   The default value.
+ * @param bool addPrefix
+ *   Determins if the "SHOOV_" prefix should be added to the variable. Defaults
+ *   to TRUE.
+ *
  *
  * @returns {*}
  */
-var getConfig = function(str, defaultValue) {
+var getConfig = function(str, defaultValue, addPrefix) {
   // Set config hierarchy.
   var configFile = process.env[(process.platform == 'win32') ? 'USERPROFILE' : 'HOME'] + '/.shoov.json';
   nconf
     .env()
     .file(configFile);
 
-  var upperCase = 'SHOOV_' + str.toUpperCase();
+  addPrefix = addPrefix || true;
+
+  var prefix = addPrefix ? 'SHOOV_' : '';
+
+  var upperCase = prefix + str.toUpperCase();
   var confValue = nconf.get(str) || nconf.get(upperCase);
   return confValue || defaultValue;
 };
@@ -248,7 +256,15 @@ var wdcssSetup = {
   getClient : function (done, capsSetup) {
     var caps = {};
 
-    if (process.env.SAUCE_USERNAME) {
+    // We follow the naming conventions of the username and key, as proivded by
+    // the different service providers.
+    var sauceUserName = getConfig('sauce_username', false, false);
+    var sauceAccessKey = getConfig('sauce_access_key', false, false);
+
+    var browserStackUserName = getConfig('browserstack_username', false, false);
+    var browserStackKey = getConfig('browserstack_key', false, false);
+
+    if (sauceUserName && sauceAccessKey) {
       caps['browserName'] = 'chrome';
       caps['platform'] = 'Linux';
       caps['version'] = '41.0';
@@ -258,19 +274,19 @@ var wdcssSetup = {
         desiredCapabilities: caps,
         host: 'ondemand.saucelabs.com',
         port: 80,
-        user: process.env.SAUCE_USERNAME,
-        key: process.env.SAUCE_ACCESS_KEY
+        user: sauceUserName,
+        key: sauceAccessKey
       });
     }
-    else if (process.env.BROWSERSTACK_USERNAME) {
+    else if (browserStackUserName && browserStackKey) {
       caps['browser'] = 'Chrome';
       caps['browser_version'] = '39.0';
       caps['os'] = 'OS X';
       caps['os_version'] = 'Yosemite';
       caps['resolution'] = '1024x768';
 
-      caps['browserstack.user'] = process.env.BROWSERSTACK_USERNAME;
-      caps['browserstack.key'] = process.env.BROWSERSTACK_KEY;
+      caps['browserstack.user'] = browserStackUserName;
+      caps['browserstack.key'] = browserStackKey;
       caps['browserstack.debug'] = 'true';
 
       client = WebdriverIO.remote({
