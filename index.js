@@ -221,7 +221,7 @@ var wdcssSetup = {
     }
 
     // @todo: Convert to Ramda.
-
+    // Keep only images that were not processed yet.
     var newRes = {};
     Object.keys(res).forEach(function(key) {
       if (processedRes.indexOf(key) == -1) {
@@ -237,8 +237,6 @@ var wdcssSetup = {
     var isNotWithinMisMatchTolerance = R.filter(R.where({isWithinMisMatchTolerance: false}));
     var uploadImages = R.mapObj(R.forEach(uploadFailedImage));
     var checkImages = R.compose(uploadImages, R.mapObj(isNotWithinMisMatchTolerance));
-
-    console.log(newRes);
 
     checkImages(newRes);
   },
