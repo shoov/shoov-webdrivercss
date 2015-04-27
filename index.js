@@ -17,6 +17,9 @@ var uploads = [];
 
 var client = {};
 
+// The images tath were processed.
+var processedRes = [];
+
 // @todo: Get this info from the "uploads" variable.
 var buildId;
 
@@ -182,11 +185,6 @@ var uploadFailedImage = function(obj) {
   throw new Error('Found regression in test');
 };
 
-var isNotWithinMisMatchTolerance = R.filter(R.where({isWithinMisMatchTolerance: false}));
-var uploadImages = R.mapObj(R.forEach(uploadFailedImage));
-var checkImages = R.compose(uploadImages, R.mapObj(isNotWithinMisMatchTolerance));
-
-
 var wdcssSetup = {
 
   /**
@@ -200,7 +198,7 @@ var wdcssSetup = {
   },
 
   after: function(done) {
-    Promise
+    return Promise
       .all(uploads)
       .then(function() {
         if (uploads.length) {
@@ -221,7 +219,28 @@ var wdcssSetup = {
     if (err) {
       console.error(err);
     }
-    checkImages(res);
+
+    // @todo: Convert to Ramda.
+
+    var newRes = {};
+    Object.keys(res).forEach(function(key) {
+      if (processedRes.indexOf(key) == -1) {
+        var val = res[key];
+        newRes[key] = val;
+      }
+      else {
+        // Add to the processed images.
+        processedRes.push(key);
+      }
+    });
+
+    var isNotWithinMisMatchTolerance = R.filter(R.where({isWithinMisMatchTolerance: false}));
+    var uploadImages = R.mapObj(R.forEach(uploadFailedImage));
+    var checkImages = R.compose(uploadImages, R.mapObj(isNotWithinMisMatchTolerance));
+
+    console.log(newRes);
+
+    checkImages(newRes);
   },
 
   getUploadedRequests: function() {
