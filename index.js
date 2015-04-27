@@ -268,7 +268,6 @@ var wdcssSetup = {
       caps['os'] = 'OS X';
       caps['os_version'] = 'Yosemite';
       caps['resolution'] = '1024x768';
-      caps['project'] = 'Shenkar';
 
       caps['browserstack.user'] = process.env.BROWSERSTACK_USERNAME;
       caps['browserstack.key'] = process.env.BROWSERSTACK_KEY;
