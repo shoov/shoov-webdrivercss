@@ -227,9 +227,6 @@ var wdcssSetup = {
       if (processedRes.indexOf(key) == -1) {
         var val = res[key];
         newRes[key] = val;
-      }
-      else {
-        // Add to the processed images.
         processedRes.push(key);
       }
     });
