@@ -198,8 +198,8 @@ var wdcssSetup = {
   /**
    * Init the client.
    */
-  before: function(done, capsSetup) {
-    client = this.getClient(done, capsSetup);
+  before: function(done, caps) {
+    client = this.getClient(done, caps);
     WebdriverCSS.init(client);
 
     return client;
@@ -252,9 +252,16 @@ var wdcssSetup = {
 
   /**
    * Get client.
+   *
+   * @param done
+   *   Mocha's done callback.
+   * @param capsConfig
+   *   The capabilities configuration. If empty, default one will be used.
    */
-  getClient : function (done, capsSetup) {
-    var caps = {};
+  getClient : function (done, caps) {
+    caps = caps || {};
+
+    var capsProvided = !!Object.keys(caps).length;
 
     // We follow the naming conventions of the username and key, as proivded by
     // the different service providers.
@@ -265,10 +272,13 @@ var wdcssSetup = {
     var browserStackKey = getConfig('browserstack_key', false, false);
 
     if (sauceUserName && sauceAccessKey) {
-      caps['browserName'] = 'chrome';
-      caps['platform'] = 'Linux';
-      caps['version'] = '41.0';
-      caps['screenResolution'] = '1024x768';
+      if (!capsProvided) {
+        // Set default capabilities.
+        caps['browserName'] = 'chrome';
+        caps['platform'] = 'Linux';
+        caps['version'] = '41.0';
+        caps['screenResolution'] = '1024x768';
+      }
 
       client = WebdriverIO.remote({
         desiredCapabilities: caps,
@@ -279,11 +289,14 @@ var wdcssSetup = {
       });
     }
     else if (browserStackUserName && browserStackKey) {
-      caps['browser'] = 'Chrome';
-      caps['browser_version'] = '39.0';
-      caps['os'] = 'OS X';
-      caps['os_version'] = 'Yosemite';
-      caps['resolution'] = '1024x768';
+      if (!capsProvided) {
+        // Set default capabilities.
+        caps['browser'] = 'Chrome';
+        caps['browser_version'] = '39.0';
+        caps['os'] = 'OS X';
+        caps['os_version'] = 'Yosemite';
+        caps['resolution'] = '1024x768';
+      }
 
       caps['browserstack.user'] = browserStackUserName;
       caps['browserstack.key'] = browserStackKey;
@@ -301,9 +314,22 @@ var wdcssSetup = {
 
     // Init the client.
     client.init(done);
+
+    var width;
+    var height;
+
+    if (capsProvided && caps.resolution) {
+      var size = caps.resolution.split('x');
+      width = parseInt(size[0]);
+      height = parseInt(size[1]);
+    }
+
+    width = width || 1024;
+    height = height || 768;
+
     client.setViewportSize({
-      width: 1024,
-      height: 768
+      width: width,
+      height: height
     });
 
     return client;
