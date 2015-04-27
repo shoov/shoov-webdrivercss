@@ -320,13 +320,12 @@ var wdcssSetup = {
 
     if (capsProvided && caps.resolution) {
       var size = caps.resolution.split('x');
-      width = size[0];
-      height = size[1];
+      width = parseInt(size[0]);
+      height = parseInt(size[1]);
     }
-    else {
-      width = 1024;
-      height = 768;
-    }
+
+    width = width || 1024;
+    height = height || 768;
 
     client.setViewportSize({
       width: width,
