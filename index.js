@@ -198,8 +198,8 @@ var wdcssSetup = {
   /**
    * Init the client.
    */
-  before: function(done, capsSetup) {
-    client = this.getClient(done, capsSetup);
+  before: function(done, caps) {
+    client = this.getClient(done, caps);
     WebdriverCSS.init(client);
 
     return client;
@@ -258,8 +258,10 @@ var wdcssSetup = {
    * @param capsConfig
    *   The capabilities configuration. If empty, default one will be used.
    */
-  getClient : function (done, capsConfig) {
-    var caps = capsConfig || {};
+  getClient : function (done, caps) {
+    caps = caps || {};
+
+    var capsProvided = !!Object.keys(caps).length;
 
     // We follow the naming conventions of the username and key, as proivded by
     // the different service providers.
@@ -270,14 +272,13 @@ var wdcssSetup = {
     var browserStackKey = getConfig('browserstack_key', false, false);
 
     if (sauceUserName && sauceAccessKey) {
-      if (!caps) {
+      if (!capsProvided) {
         // Set default capabilities.
         caps['browserName'] = 'chrome';
         caps['platform'] = 'Linux';
         caps['version'] = '41.0';
         caps['screenResolution'] = '1024x768';
       }
-
 
       client = WebdriverIO.remote({
         desiredCapabilities: caps,
@@ -288,7 +289,7 @@ var wdcssSetup = {
       });
     }
     else if (browserStackUserName && browserStackKey) {
-      if (!caps) {
+      if (!capsProvided) {
         // Set default capabilities.
         caps['browser'] = 'Chrome';
         caps['browser_version'] = '39.0';
@@ -296,6 +297,9 @@ var wdcssSetup = {
         caps['os_version'] = 'Yosemite';
         caps['resolution'] = '1024x768';
       }
+
+      console.log(capsProvided);
+      console.log(caps);
 
       caps['browserstack.user'] = browserStackUserName;
       caps['browserstack.key'] = browserStackKey;
@@ -317,8 +321,8 @@ var wdcssSetup = {
     var width;
     var height;
 
-    if (caps['resolution']) {
-      var size = caps['resolution'].split('x');
+    if (capsProvided && caps.resolution) {
+      var size = caps.resolution.split('x');
       width = size[0];
       height = size[1];
     }
@@ -326,7 +330,6 @@ var wdcssSetup = {
       width = 1024;
       height = 768;
     }
-
 
     client.setViewportSize({
       width: width,
