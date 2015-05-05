@@ -196,17 +196,6 @@ var uploadFailedImage = function(obj) {
 var wdcssSetup = {
 
   /**
-   * Return the test name based on the caps configuration and env prefix.
-   */
-  getTestName: function(capsConfig) {
-    var selectedCaps = process.env.SELECTED_CAPS || undefined;
-    var caps = selectedCaps ? capsConfig[selectedCaps] : undefined;
-
-    var providerPrefix = process.env.PROVIDER_PREFIX ? process.env.PROVIDER_PREFIX + '-' : '';
-    return selectedCaps ? providerPrefix + selectedCaps : providerPrefix + 'default';
-  },
-
-  /**
    * Init the client.
    */
   before: function(done, caps) {
