@@ -104,9 +104,9 @@ var getConfig = function(str, defaultValue, addPrefix) {
     .env()
     .file(configFile);
 
-  addPrefix = addPrefix || true;
+  addPrefix = addPrefix == false ? addPrefix : true;
 
-  var prefix = addPrefix ? 'SHOOV_' : '';
+  var prefix = !!addPrefix ? 'SHOOV_' : '';
 
   var upperCase = prefix + str.toUpperCase();
   var confValue = nconf.get(str) || nconf.get(upperCase);
