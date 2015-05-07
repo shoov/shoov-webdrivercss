@@ -124,7 +124,7 @@ var uploadFailedImage = function(obj) {
     throw new Error('The Shoov access token is not defined, visit your account page.');
   }
 
-  var backendUrl = getConfig('backend_url', 'https://dev-shoov.pantheon.io');
+  var backendUrl = getConfig('backend_url', 'https://live-shoov.pantheon.io');
   var options = {
     url: backendUrl + '/api/screenshots-upload',
     headers: {
