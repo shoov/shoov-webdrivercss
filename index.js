@@ -221,7 +221,7 @@ var wdcssSetup = {
       .all(uploads)
       .then(function() {
         if (uploads.length) {
-          var clientUrl = getConfig('client_url', 'http://shoov.gizra.com');
+          var clientUrl = getConfig('client_url', 'https://app.shoov.io');
           var regressionUrl = clientUrl + '/#/screenshots/' + buildId;
           console.log('See regressions in: ' + regressionUrl);
 
