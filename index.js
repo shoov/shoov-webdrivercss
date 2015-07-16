@@ -187,6 +187,7 @@ var uploadFailedImage = function(obj) {
       form.append('directory_prefix', gitData.gitPrefix);
       form.append('repository', gitData.gitRepoName);
 
+      form.append('tags', obj.properties.tags ? obj.properties.tags.join(',') : '');
 
       uploads.push(req);
     });
