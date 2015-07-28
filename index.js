@@ -74,6 +74,7 @@ var gitRepoName = new Promise(function(resolve, reject) {
         .replace('\n', '')
         .replace('git@github.com:', '')
         .replace('https://github.com/', '')
+        .replace(/https:\/\/.*@github.com\//i, '')
         .replace('git://github.com/', '')
         .replace('.git', '');
 
