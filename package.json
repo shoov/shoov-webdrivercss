@@ -28,8 +28,8 @@
     "open": "0.0.5",
     "ramda": "^0.11.0",
     "request-promise": "^0.4.0",
-    "webdrivercss": "https://github.com/amitaibu/webdrivercss/tarball/89d4d61401caa0775420c2980ae33e1fb7630752",
-    "webdriverio": "^2.4.5"
+    "webdrivercss": "https://github.com/amitaibu/webdrivercss/tarball/076e31af7101ee27c3977c6210dd138bdc6010bd",
+    "webdriverio": "https://github.com/amitaibu/webdriverio/tarball/65655dc2948c6a1e772b656ea4209969e9385fc9"
   },
   "devDependencies": {
     "mocha": "*"
