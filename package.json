@@ -1,6 +1,6 @@
 {
   "name": "shoov-webdrivercss",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Shoov integration with WebDriverCss",
   "license": "MIT",
   "repository": "shoov/shoov-webdrivercss",
