@@ -166,11 +166,13 @@ var uploadFailedImage = function(obj) {
           }
           // Check Same screenshots don't exist yet.
           var files = [obj.baselinePath, obj.regressionPath, obj.diffPath];
-          return getScreenshotByHash(files, JSON.parse(data).data[0]['id'], options);
+          buildId = JSON.parse(data).data[0]['id'];
+          return getScreenshotByHash(files, buildId, options);
         })
         .then(function(data) {
           if (JSON.parse(data).count) {
             console.log('Screenshots already exist.');
+            showRegressionLink(buildId);
           }
           else {
             // This is new regression. Files should be uploaded.
@@ -328,6 +330,22 @@ var getFileContentsHash = function(path) {
   return crypto.createHash('md5').update(file).digest("hex");
 };
 
+/**
+ * Show in console link to the regression images in the client.
+ *
+ * @param buildId
+ *  UI Build ID.
+ */
+var showRegressionLink = function(buildId) {
+  var clientUrl = getConfig('client_url', 'https://app.shoov.io');
+  var regressionUrl = clientUrl + '/#/screenshots/' + buildId + '?XDEBUG_SESSION_START=16066';
+  console.log('See regressions in: ' + regressionUrl);
+
+  if (getConfig('open_link')) {
+    open(regressionUrl)
+  }
+};
+
 var wdcssSetup = {
 
   /**
@@ -356,13 +374,7 @@ var wdcssSetup = {
       .all(uploads)
       .then(function() {
         if (uploads.length) {
-          var clientUrl = getConfig('client_url', 'https://app.shoov.io');
-          var regressionUrl = clientUrl + '/#/screenshots/' + buildId;
-          console.log('See regressions in: ' + regressionUrl);
-
-          if (getConfig('open_link')) {
-            open(regressionUrl)
-          }
+          showRegressionLink(buildId);
         }
 
         client.end(done);
