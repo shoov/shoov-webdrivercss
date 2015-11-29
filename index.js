@@ -176,8 +176,8 @@ var uploadFailedImage = function(obj) {
           }
           else {
             // This is new regression. Files should be uploaded.
+            console.log('Screenshots will be uploaded.');
             uploadFiles(gitData, obj, options);
-            console.log('Upload done.');
           }
         })
     });
@@ -297,7 +297,7 @@ var getScreenshotByHash = function(files, buildId, options) {
  * Creates hash tag for the screenshot.
  *
  * @param files
- *  Array of Screenshot images urls./
+ *  Array of Screenshot images urls.
  * @param buildId
  *  UI Build ID.
  *
