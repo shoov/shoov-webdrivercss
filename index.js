@@ -212,9 +212,9 @@ var wdcssSetup = {
   /**
    * Init the client.
    */
-  before: function(done, caps) {
+  before: function(done, caps, options) {
     client = this.getClient(done, caps);
-    WebdriverCSS.init(client);
+    WebdriverCSS.init(client, options);
 
     return client;
   },
