@@ -11,6 +11,7 @@ var R = require('ramda');
 var request = require('request-promise');
 var WebdriverCSS = require('webdrivercss');
 var WebdriverIO = require('webdriverio');
+var crypto = require('crypto');
 
 
 var uploads = [];
@@ -128,10 +129,8 @@ var uploadFailedImage = function(obj) {
 
   var backendUrl = getConfig('backend_url', 'https://live-shoov.pantheonsite.io');
   var options = {
-    url: backendUrl + '/api/screenshots-upload',
-    headers: {
-      'access-token': accessToken
-    }
+    backendUrl: backendUrl,
+    accessToken: accessToken
   };
 
   var gitData = {
@@ -140,60 +139,211 @@ var uploadFailedImage = function(obj) {
     gitRepoName: gitRepoName
   };
 
-  var uploadResponse = '';
-
   Promise.props(gitData)
     .then(function(gitData) {
-      var req = request.post(options);
-      req
-        .on('error', function (err) {
-          throw new Error(err);
-        })
-        .on('data', function(chunk) {
-          uploadResponse += chunk;
-        })
-        .on('end', function() {
-          var data = JSON.parse(uploadResponse).data[0];
-          // Populate the build ID.
-          buildId = buildId || data.build;
 
-          if (getConfig('debug')) {
-            // Show response.
-            console.log(data);
+      // Get the repository ID.
+      var repoOptions = {
+        url: options.backendUrl + '/api/repositories?filter[label]=' + gitData.gitRepoName + '&fields=id',
+        headers: {
+          'access-token': options.accessToken
+        }
+      };
+
+      request.get(repoOptions)
+        .then(function(data) {
+          if (!JSON.parse(data).count) {
+            // Repository doesn't exist.
+            return false;
+          }
+          // Get the UI Build ID.
+          return getBuildId(JSON.parse(data).data[0]['id'], options);
+        })
+        .then(function(data) {
+          if (!JSON.parse(data).count) {
+            // UI Build doesn't exist.
+            return false;
+          }
+          // Check Same screenshots don't exist yet.
+          var files = [obj.baselinePath, obj.regressionPath, obj.diffPath];
+          buildId = JSON.parse(data).data[0]['id'];
+          return getScreenshotByHash(files, buildId, options);
+        })
+        .then(function(data) {
+          if (JSON.parse(data).count) {
+            console.log('Screenshots already exist.');
+            showRegressionLink(buildId);
+          }
+          else {
+            // This is new regression. Files should be uploaded.
+            console.log('Screenshots will be uploaded.');
+            uploadFiles(gitData, obj, options);
           }
         })
-        .on('response', function(response) {
-          if (response.statusCode >= 500) {
-            throw new Error('Backend error');
-          }
-          else if (response.statusCode !== 200) {
-            throw new Error('Access token is incorrect or no longer valid, visit your account page');
-          }
-        });
-
-      var form = req.form();
-
-      var label = path.basename(obj.baselinePath, '.baseline.png').replace('.', ' ');
-      form.append('label', label);
-
-      form.append('baseline', fs.createReadStream(obj.baselinePath));
-      form.append('regression', fs.createReadStream(obj.regressionPath));
-      form.append('diff', fs.createReadStream(obj.diffPath));
-
-      form.append('baseline_name', obj.baselinePath);
-      form.append('git_commit', gitCommit);
-      form.append('git_branch', gitBranch);
-      form.append('git_subject', gitData.gitSubject);
-
-      form.append('directory_prefix', gitData.gitPrefix);
-      form.append('repository', gitData.gitRepoName);
-
-      form.append('tags', obj.properties.tags ? obj.properties.tags.join(',') : '');
-
-      uploads.push(req);
     });
 
   throw new Error('Found regression in test');
+};
+
+/**
+ * Upload files to the backend.
+ *
+ * @param gitData
+ *  Object that contains git data: gitSubject, gitPrefix and gitRepoName
+ * @param obj
+ *  Contains references to files.
+ * @param options
+ *  Object that contains request options: backendUrl and accessToken.
+ */
+var uploadFiles  = function(gitData, obj, options) {
+  var uploadOptions = {
+    url: options.backendUrl + '/api/screenshots-upload',
+    headers: {
+      'access-token': options.accessToken
+    }
+  };
+
+  var uploadResponse = '';
+
+  var req = request.post(uploadOptions);
+  req
+    .on('error', function (err) {
+      throw new Error(err);
+    })
+    .on('data', function(chunk) {
+      uploadResponse += chunk;
+    })
+    .on('end', function() {
+      var data = JSON.parse(uploadResponse).data[0];
+      // Populate the build ID.
+      buildId = buildId || data.build;
+      if (getConfig('debug')) {
+        // Show response.
+        console.log(data);
+      }
+    })
+    .on('response', function(response) {
+      if (response.statusCode >= 500) {
+        throw new Error('Backend error');
+      }
+      else if (response.statusCode !== 200) {
+        throw new Error('Access token is incorrect or no longer valid, visit your account page');
+      }
+    });
+
+  var form = req.form();
+
+  var label = path.basename(obj.baselinePath, '.baseline.png').replace('.', ' ');
+
+  form.append('label', label);
+
+  form.append('baseline', fs.createReadStream(obj.baselinePath));
+  form.append('regression', fs.createReadStream(obj.regressionPath));
+  form.append('diff', fs.createReadStream(obj.diffPath));
+
+  form.append('baseline_name', obj.baselinePath);
+  form.append('git_commit', gitCommit);
+  form.append('git_branch', gitBranch);
+  form.append('git_subject', gitData.gitSubject);
+
+  form.append('directory_prefix', gitData.gitPrefix);
+  form.append('repository', gitData.gitRepoName);
+
+  uploads.push(req);
+};
+
+/**
+ * Get UI Build ID by the repository ID from backend.
+ *
+ * @param repoId
+ *  Repository ID.
+ * @param options
+ *  Object that contains request options: backendUrl and accessToken.
+ */
+var getBuildId = function(repoId, options) {
+  var buildOptions = {
+    url: options.backendUrl + '/api/builds?filter[repository]=' + repoId + '&fields=id',
+    headers: {
+      'access-token': options.accessToken
+    }
+  };
+  return request.get(buildOptions);
+};
+
+/**
+ * Get the Screenshots by the hash tag.
+ *
+ * @param files
+ *  Array that contains images urls.
+ * @param buildId
+ *  UI Build ID.
+ * @param options
+ *  Object that contains request options: backendUrl and accessToken.
+ */
+var getScreenshotByHash = function(files, buildId, options) {
+  var hash = createHashTag(files, buildId);
+
+  var screenshotOptions = {
+    url: options.backendUrl + '/api/screenshots?filter[build]=' + buildId + '&filter[screenshot_hash]=' + hash + '&fields=id',
+    headers: {
+      'access-token': options.accessToken
+    }
+  };
+
+  return request.get(screenshotOptions);
+};
+
+/**
+ * Creates hash tag for the screenshot.
+ *
+ * @param files
+ *  Array of Screenshot images urls.
+ * @param buildId
+ *  UI Build ID.
+ *
+ * @return string
+ *  Returns hash tag.
+ */
+var createHashTag = function(files, buildId) {
+  var hash = [];
+  files.forEach(function(file) {
+    hash.push(getFileContentsHash(file));
+  });
+
+  hash.push(buildId);
+
+  return crypto.createHash('md5').update(hash.join('')).digest("hex");
+};
+
+/**
+ * Create hash tag from the file contents.
+ *
+ * @param path
+ *  The path to the file.
+ *
+ * @returns string
+ *  Returns the hash tag.
+ */
+var getFileContentsHash = function(path) {
+  // Get the file contents.
+  var file = fs.readFileSync(path, 'binary');
+  return crypto.createHash('md5').update(file).digest("hex");
+};
+
+/**
+ * Show in console link to the regression images in the client.
+ *
+ * @param buildId
+ *  UI Build ID.
+ */
+var showRegressionLink = function(buildId) {
+  var clientUrl = getConfig('client_url', 'https://app.shoov.io');
+  var regressionUrl = clientUrl + '/#/screenshots/' + buildId + '?XDEBUG_SESSION_START=16066';
+  console.log('See regressions in: ' + regressionUrl);
+
+  if (getConfig('open_link')) {
+    open(regressionUrl)
+  }
 };
 
 var wdcssSetup = {
@@ -224,13 +374,7 @@ var wdcssSetup = {
       .all(uploads)
       .then(function() {
         if (uploads.length) {
-          var clientUrl = getConfig('client_url', 'https://app.shoov.io');
-          var regressionUrl = clientUrl + '/#/screenshots/' + buildId;
-          console.log('See regressions in: ' + regressionUrl);
-
-          if (getConfig('open_link')) {
-            open(regressionUrl)
-          }
+          showRegressionLink(buildId);
         }
 
         client.end(done);
